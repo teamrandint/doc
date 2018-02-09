@@ -2,6 +2,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage{graphicx}
 \usepackage{hyperref}
+\usepackage{verbatim}
 
 %opening
 \title{SEng 468 Documentation\\Daytrading Inc.}
@@ -54,7 +55,7 @@ unsuccessful commands.
 
 \subsection{Project Plan}
 
-Weekly Deadlines:
+\subsubsection{Weekly Deadlines}
 \begin{itemize}
 \item First log book entries are due Jan 19th by 23:59:59
 \item Log book entries (must be completed individually by each group member and 
@@ -205,5 +206,162 @@ receives the “DUMPLOG”command.
 \end{itemize}
 
 \section{Component Documentation}
-\subsection{}
+\subsection{Web Server}
+\subsection{Audit Server}
+\paragraph{Description}
+
+The audit server is an HTTP web server. For each endpoint, pass the information 
+as URI queries. For example, to post a new userCommand event, the request URI 
+would be as follows:
+
+\begin{verbatim}
+localhost:8080/userCommand?server=TRANS&funds=22.33&transactionNum=11&command=BU 
+Y\end{verbatim}
+
+TODO:
+\begin{itemize}
+ \item Input validiation and error checking
+ \item Multithreading requests to write to the log object
+ \item Set up and document proper return values
+\end{itemize}
+
+\paragraph{Endpoints}
+
+For all supported params, being surrounded with brackets indicates optional.
+
+\begin{itemize}
+ \item \textbf{/userCommand}
+\\Supported Params:
+    server
+    transactionNum
+    command
+    (username)
+    (stockSymbol)
+    (filename)
+    (funds)
+
+ \item \textbf{/quoteServer}
+  \\Supported Params:
+	 server
+	 transactionNum
+	 price
+	 stockSymbol
+	 username
+	 quoteServerTime
+	 cryptoKey
+
+ \item \textbf{/accountTransaction}
+  \\Supported Params:
+	 transactionNum
+	 action
+	 (username)
+	 (funds)
+
+ \item \textbf{/systemEvent}
+  \\Supported Params:
+	 transactionNum
+	 command
+	 (username)
+	 (stockSymbol)
+	 (filename)
+	 (funds)
+
+ \item \textbf{/errorEvent}
+  \\Supported Params:
+	 server
+	 transactionNum
+	 command
+	 (username)
+	 (stockSymbol)
+	 (filename)
+	 (funds)
+	 (errormessage)
+
+ \item \textbf{/dumpLog}
+  \\Supported Params:
+	 filename
+	 (username)
+\end{itemize}
+
+Return Values:
+\\Right now the commands just echo the parsed xml.
+
+\subsection{Transaction Server}
+The transaction server still handles the core of the logic.
+
+\subsection{Database}
+For a database, we chose to use Redis for its scalaiblity, fault tolerance and 
+low overhead. In addition, in an iterative course such as this, we value being 
+able to change the schema on the fly. Since Redis is a key/value store we kept 
+the schema light. The documentation has key in the header, with a description of 
+the params in the body. Our redis instance is fully Docker containerized and 
+runs well with the default settings.
+
+\paragraph{Endpoints}
+
+Redis uses TCP by default. There are also many clients provided.
+
+\begin{itemize}
+\item \textbf{USERID:Balance}
+\\Contains the balance of the user ID. Stored as a floating point number for 
+now, however Redis does offer some accuracy guarantees.
+\\Functions:
+   AddFunds
+   GetFunds
+   RemoveFunds
+
+\item \textbf{USERID:Stocks}
+\\Redis hash of the stocks a user owns. Stocks are stored as integers.
+\\Functions:
+  AddStock
+  GetStock
+  RemoveFunds
+
+\item \textbf{USERID:SellOrders}
+\\Keeps tracks of user's uncomitted sell orders.
+\\Functions:
+  PushSell
+  PopSell
+
+\item \textbf{USERID:BuyOrders}
+\\Keeps tracks of user's uncomitted buy orders.
+\\Functions:
+  PushBuy
+  PopBuy
+
+\item \textbf{USERID:SellTriggers}
+\\Keeps tracks of user's running triggers.
+\\Functions:
+  AddSellTrigger
+  RemoveSellTrigger
+  GetSellTrigger
+ 
+\item \textbf{USERID:BuyTriggers}
+\\Keeps tracks of user's running triggers.
+\\Functions:
+  AddBuyTrigger
+  RemoveBuyTrigger
+  GetBuyTrigger
+  
+\item \textbf{USERID:BalanceReserve}
+Keeps tracks of user's reserve account balance. This holds funds offset for 
+triggers
+\textit{Not implemented yet}
+
+\item \textbf{USERID:StocksReserve}
+Keeps tracks of user's waiting sell triggers balance.
+\textit{Not implemented yet}
+
+\item \textbf{USERID:History}
+Keeps tracks of all user's account transactions.
+
+\textit{Not implemented yet}
+
+\item \textbf{Other functions}
+  GetUserInfo: Returns as user's account information
+\end{itemize}
+Running
+  Build the docker container.  Expose the proper ports when running (-p 
+exposed:6397).  Good to go!
+
 \end{document}
